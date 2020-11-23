@@ -44,7 +44,8 @@ APP_PREFIX = "\x02[ChaseApp]\x02 "
 BOT_PREFIX = "\x02[ChaseBot]\x02 "
 
 APP_STORE_LINKS = [
-    {"os": "Android", "url": "https://play.google.com/store/apps/details?id=com.carverauto.chaseapp"}
+    {"os": "Android", "url": "https://play.google.com/store/apps/details?id=com.carverauto.chaseapp"},
+    {"os": "iOS", "url": "Coming Soon™"},
 ]
 
 CHASES = {}
