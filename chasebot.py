@@ -279,17 +279,25 @@ def twitter_thread(bot):
 @plugin.example('.applinks')
 @plugin.output_prefix(APP_PREFIX)
 def send_links(bot, trigger):
-    """Send links to the ChaseApp store pages"""
+    """Sends links to the ChaseApp store pages"""
     return bot.say("Download ChaseApp here: {}".format(
         " | ".join("{}: {}".format(link['os'], link['url']) for link in APP_STORE_LINKS)
     ))
 
 
 @plugin.command('listchases', 'list', 'lc', 'chases')
-@plugin.example('.listchases')
+@plugin.example('.list --showlive')
 @plugin.output_prefix(APP_PREFIX)
 def list_chases(bot, trigger):
-    """List active chases"""
+    """List chases
+
+    Pass `--showlive` to see only active chases. Pass `--index [#]`
+    to fetch a specific chase (working backwards from most recent).
+
+        e.g. ^list --index 2
+             ^list --showlive
+             ^list --index 4 --showid
+    """
 
     show_id = False
     list_live = False
@@ -343,10 +351,27 @@ def list_chases(bot, trigger):
 
 
 @plugin.command('updatechase', 'update', 'uc')
-@plugin.example('.updatechase')
+@plugin.example('.update --last --name "LA Chase"')
 @plugin.output_prefix(APP_PREFIX)
 def update_chase(bot, trigger):
-    """Update chases"""
+    """Update chases
+
+    Requires either `--last` or `--id [ChaseApp chase ID]` along with some
+    fields to modify (`--name "[new name]"` or `--url [new url]` etc). Any
+    values that contain spaces must be surrounded by quotation marks. Only
+    specific users are granted access to this command.
+
+    Valid fields:
+        --name "LA Chase"
+        --url fancyurlhere.com
+        --desc "some description here"
+        --live true(default)/false
+        --network CBSLA
+        --urls "[{'network': 'google', 'url': 'https://google.com'}]"
+
+        e.g. ^update --last --name "LA Chase"
+             ^update --id 7e171514-9c51-11ea-b6a3-0b58aa4cbde4 --url fancyurlhere.com
+    """
 
     check = trigger.hostmask.split("!")[1]
     if check not in bot.config.chaseapp.chaseapp_mods:
@@ -410,7 +435,22 @@ def update_chase(bot, trigger):
 @plugin.example('.addchase')
 @plugin.output_prefix(APP_PREFIX)
 def add_chase(bot, trigger):
-    """Add a chase"""
+    """Add chases
+
+    Requires `--name, --url, --desc, --live` any other fields are optional. Any
+    values that contain spaces must be surrounded by quotation marks. Only
+    specific users are granted access to this command.
+
+    Valid fields:
+        --name "LA Chase"
+        --url fancyurlhere.com
+        --desc "some description here"
+        --live true(default)/false
+        --network CBSLA
+        --urls "[{'network': 'google', 'url': 'https://google.com'}]"
+
+        e.g. ^add --name "LA Chase" --url cbsla.com --desc "a chase in LA" --live
+    """
 
     check = trigger.hostmask.split("!")[1]
     if check not in bot.config.chaseapp.chaseapp_mods:
@@ -472,7 +512,14 @@ def add_chase(bot, trigger):
 @plugin.example('.deletechase')
 @plugin.output_prefix(APP_PREFIX)
 def delete_chase(bot, trigger):
-    """delete chases"""
+    """Delete chases
+
+    Requires either `--last` or `--id [ChaseApp chase ID]`. Only specific users
+    are granted access to this command.
+
+        e.g. ^delete --last
+             ^delete --id 7e171514-9c51-11ea-b6a3-0b58aa4cbde4
+    """
 
     check = trigger.hostmask.split("!")[1]
     if check not in bot.config.chaseapp.chaseapp_mods:
