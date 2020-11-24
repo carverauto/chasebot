@@ -5,11 +5,11 @@ from __future__ import absolute_import, division, generator_stop, print_function
 import html
 import json
 from pathlib import Path
+import shlex
 import traceback
 
 import pendulum
 import requests
-from sopel_sopel_plugin_argparser import parseargs
 import twython
 
 from sopel import plugin, tools
@@ -230,6 +230,29 @@ def shutdown(bot):
         pass
 
 
+def _parseargs(passed_args):
+    if passed_args:
+        args = shlex.split(passed_args)
+
+        options = {
+            k: True if v.startswith('-') else v
+            for k, v in zip(args, args[1:]+["--"]) if k.startswith('-')
+        }
+
+        extra = args
+        if options:
+            extra = []
+            for k, v in options.items():
+                for arg in args:
+                    if arg != k and arg != v:
+                        extra.append(arg)
+
+        options['extra_text'] = ' '.join(extra)
+        return options
+    else:
+        return {}
+
+
 @plugin.interval(10)
 @plugin.thread(True)
 @plugin.output_prefix(BOT_PREFIX)
@@ -304,7 +327,7 @@ def list_chases(bot, trigger):
 
     index = -1
     if trigger.group(2):
-        args = parseargs(trigger.group(2))
+        args = _parseargs(trigger.group(2))
         index = int(args.get('--index', 1)) * -1
         show_id = args.get('--showid')
         list_live = args.get('--showlive')
@@ -383,7 +406,7 @@ def update_chase(bot, trigger):
     if not trigger.group(2):
         return bot.reply("I need some info to update")
 
-    args = parseargs(trigger.group(2))
+    args = _parseargs(trigger.group(2))
     if not args:
         return bot.reply("Something went wrong parsing your input")
 
@@ -467,7 +490,7 @@ def add_chase(bot, trigger):
     if not trigger.group(2):
         return bot.reply("I need some info to add")
 
-    args = parseargs(trigger.group(2))
+    args = _parseargs(trigger.group(2))
     if not args:
         return bot.reply("Something went wrong parsing your input")
 
@@ -536,7 +559,7 @@ def delete_chase(bot, trigger):
     if not trigger.group(2):
         return bot.reply("I need a ChaseApp ID or `--last` to delete")
 
-    args = parseargs(trigger.group(2))
+    args = _parseargs(trigger.group(2))
     if not args:
         return bot.reply("Something went wrong parsing your input")
 
