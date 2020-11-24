@@ -73,7 +73,7 @@ class MyStreamer(twython.TwythonStreamer):
             if not status.get('in_reply_to_status_id') and not status.get('in_reply_to_user_id_str'):
                 if not status.get('retweeted') and 'RT @' not in status.get('text', ''):
                     if not status.get('user'):
-                        pass
+                        return
                     text = "\x02@{}\x02 ({}): {}".format(
                         status['user']['screen_name'],
                         status['user']['name'],
