@@ -135,30 +135,30 @@ class MyStreamer(twython.TwythonStreamer):
                                     CHASES['current']['desc'] = text
                                     CHASES['current']['network'] = "TBD"
                                     CHASES['current']['first_run'] = True
-                                if CHASES['current'].get('first_run'):
-                                    headers = {
-                                        'User-Agent': 'chasebot@efnet (via twitter) v1.0',
-                                        'From': 'chasebot@cottongin.xyz',
-                                        'X-ApiKey': sopel_instance.config.chaseapp.chaseapp_api_key
-                                    }
+                            if CHASES['current'].get('first_run'):
+                                headers = {
+                                    'User-Agent': 'chasebot@efnet (via twitter) v1.0',
+                                    'From': 'chasebot@cottongin.xyz',
+                                    'X-ApiKey': sopel_instance.config.chaseapp.chaseapp_api_key
+                                }
 
-                                    payload = {
-                                        "name": CHASES['current']['name'],
-                                        "url": CHASES['current']['url'],
-                                        "desc": CHASES['current']['desc'],
-                                        "URLs": [
-                                            {"network": CHASES['current']['network'], "url": ""}
-                                        ],
-                                        "live": True
-                                    }
+                                payload = {
+                                    "name": CHASES['current']['name'],
+                                    "url": CHASES['current']['url'],
+                                    "desc": CHASES['current']['desc'],
+                                    "URLs": [
+                                        {"network": CHASES['current']['network'], "url": ""}
+                                    ],
+                                    "live": True
+                                }
 
-                                    api_endpoint = sopel_instance.config.chaseapp.chaseapp_api_url + "/AddChase"
+                                api_endpoint = sopel_instance.config.chaseapp.chaseapp_api_url + "/AddChase"
 
-                                    data = requests.post(api_endpoint, headers=headers, json=payload)
+                                data = requests.post(api_endpoint, headers=headers, json=payload)
 
-                                    CHASES['current']['id'] = data.text
-                                    LOGGER.info("UUID created for a new chase: {}".format(data.text))
-                                    CHASES['current']['first_run'] = False
+                                CHASES['current']['id'] = data.text
+                                LOGGER.info("UUID created for a new chase: {}".format(data.text))
+                                CHASES['current']['first_run'] = False
 
                         for channel in CHANNELS:
                             sopel_instance.say(text, channel)
@@ -358,16 +358,18 @@ def update_chase(bot, trigger):
 
     Requires either `--last` or `--id [ChaseApp chase ID]` along with some
     fields to modify (`--name "[new name]"` or `--url [new url]` etc). Any
-    values that contain spaces must be surrounded by quotation marks. Only
-    specific users are granted access to this command.
+    values that contain spaces must be surrounded by quotation marks. !*Only
+    specific users are granted access to this command.*!
 
     Valid fields:
+    ```
         --name "LA Chase"
         --url fancyurlhere.com
         --desc "some description here"
         --live true(default)/false
         --network CBSLA
         --urls "[{'network': 'google', 'url': 'https://google.com'}]"
+    ```
 
         e.g. ^update --last --name "LA Chase"
              ^update --id 7e171514-9c51-11ea-b6a3-0b58aa4cbde4 --url fancyurlhere.com
@@ -438,16 +440,18 @@ def add_chase(bot, trigger):
     """Add chases
 
     Requires `--name, --url, --desc, --live` any other fields are optional. Any
-    values that contain spaces must be surrounded by quotation marks. Only
-    specific users are granted access to this command.
+    values that contain spaces must be surrounded by quotation marks. !*Only
+    specific users are granted access to this command.*!
 
     Valid fields:
+    ```
         --name "LA Chase"
         --url fancyurlhere.com
         --desc "some description here"
         --live true(default)/false
         --network CBSLA
         --urls "[{'network': 'google', 'url': 'https://google.com'}]"
+    ```
 
         e.g. ^add --name "LA Chase" --url cbsla.com --desc "a chase in LA" --live
     """
@@ -514,8 +518,8 @@ def add_chase(bot, trigger):
 def delete_chase(bot, trigger):
     """Delete chases
 
-    Requires either `--last` or `--id [ChaseApp chase ID]`. Only specific users
-    are granted access to this command.
+    Requires either `--last` or `--id [ChaseApp chase ID]`. !*Only specific users
+    are granted access to this command.*!
 
         e.g. ^delete --last
              ^delete --id 7e171514-9c51-11ea-b6a3-0b58aa4cbde4

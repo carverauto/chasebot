@@ -1,60 +1,11 @@
 ---
-title: Kitchen Sink
-description: 'Here is a kitchen sink of shit'
-position: 1
+title: chasebot docs
+description: 'Instruction manual for `chasebot` and ChaseApp API integration'
+position: 0
 category: ''
 features: 
- - Know when a chase is happening
- - Suckle on penises
+ - ChaseApp API manipulation via IRC
 ---
 
-This are `backticks` and these are **asterisks**
-
-Example code snippet with file name
-
-```php{}[App\Models\Project.php]
-public function getRepoNameAttribute()
-{
-    if ($this->repo === null) {
-        return null;
-    }
-    preg_match('/(git@|https:\/\/)git(hub|lab).com[:|\/](.*?)\/(.*?).git/', $this->repo, $matches);
-    return "${matches[3]}/${matches[4]}";
-}
-```
-
-<alert type="info">
-
-Check out an info alert with a `codeblock` and a [link](/themes/docs)!
-
-</alert>
-
-<alert type="warning">
-
-This is an example `Warning` alert
-
-</alert>
-
-
-## badge
-<badge>v1.2+</badge>
-
-## code block
-<code-group>
-  <code-block label="Yarn" active>
-
-  ```bash
-  yarn global add fume-cli
-  ```
-
-  </code-block>
-  <code-block label="NPM">
-
-  ```bash
-  npm install -g fume-cli
-  ```
-
-  </code-block>
-</code-group>
-
-> This is a markdown hint using >
+Instruction manual for `chasebot` and ChaseApp API integration. Use the links
+on the sidebar to navigate.
