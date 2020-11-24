@@ -14,7 +14,7 @@ jobs:
         id: yarn-bin
         run: echo "::set-output name=dir::$(yarn global bin)"
       - name: Generate command files
-        run: python chasebot-docstrings.py
+        run: python3 chasebot-docstrings.py
       - name: Deploy with Fume
         run: cd docs;${{ steps.yarn-bin.outputs.dir }}/fume deploy production
         env:
