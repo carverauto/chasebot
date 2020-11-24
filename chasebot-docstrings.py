@@ -5,13 +5,13 @@ from __future__ import absolute_import, division, generator_stop, print_function
 import inspect
 from pathlib import Path
 
-from chasebot import add_chase, delete_chase, list_chases, update_chase
+import chasebot
 
 desired_functions = [
-    list_chases,
-    update_chase,
-    add_chase,
-    delete_chase,
+    chasebot.list_chases,
+    chasebot.update_chase,
+    chasebot.add_chase,
+    chasebot.delete_chase,
 ]
 
 template = """---
