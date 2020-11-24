@@ -1,1 +1,0 @@
-"List chases\n\nPass `--showlive` to see only active chases. Pass `--index [#]`\nto fetch a specific chase (working backwards from most recent).\n\n    e.g. ^list --index 2\n         ^list --showlive\n         ^list --index 4 --showid"
