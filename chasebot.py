@@ -406,6 +406,9 @@ def update_chase(bot, trigger):
     else:
         update_id = args.get('--id')
 
+    if not args.get('--live'):
+        args['--live'] = 'true'
+
     payload = {}
     for arg, value in args.items():
         if arg in ["extra_text", '--id', '--last']:
