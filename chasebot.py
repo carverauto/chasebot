@@ -308,6 +308,28 @@ def send_links(bot, trigger):
     ))
 
 
+def _fetch_api_list(bot, caller="bot", live_mode=False, index=-1):
+    headers = {
+        'User-Agent': 'chasebot@efnet ({}) v1.0'.format(caller),
+        'From': 'chasebot@cottongin.xyz'
+    }
+
+    api_endpoint = bot.config.chaseapp.chaseapp_api_url + "/ListChases"
+
+    data = requests.get(api_endpoint, headers=headers).json()
+    sorted_chases = sorted(data, key=lambda i: i['CreatedAt'])
+
+    if live_mode:
+        sorted_chases = [chase for chase in sorted_chases if chase.get('Live')]
+    else:
+        sorted_chases = [sorted_chases[index]]
+
+    if not sorted_chases:
+        return bot.say("No chases found :(")
+
+    return sorted_chases
+
+
 @plugin.command('listchases', 'list', 'lc', 'chases')
 @plugin.example('.list --showlive')
 @plugin.output_prefix(APP_PREFIX)
@@ -332,26 +354,11 @@ def list_chases(bot, trigger):
         show_id = args.get('--showid')
         list_live = args.get('--showlive')
 
-    headers = {
-        'User-Agent': 'chasebot@efnet ({}) v1.0'.format(trigger.nick),
-        'From': 'chasebot@cottongin.xyz'
-    }
-
-    api_endpoint = bot.config.chaseapp.chaseapp_api_url + "/ListChases"
-
-    data = requests.get(api_endpoint, headers=headers).json()
-    sorted_chases = sorted(data, key=lambda i: i['CreatedAt'])
-    if list_live:
-        sorted_chases = [chase for chase in sorted_chases if chase.get('Live')]
-    else:
-        sorted_chases = [sorted_chases[index]]
-
-    if not sorted_chases:
-        return bot.say("No chases found :(")
+    sorted_chases = _fetch_api_list(bot, caller=trigger.nick, live_mode=list_live, index=index) or []
 
     for chase in sorted_chases:
         bot.say("({recent}{date}) \x02{name} - {desc}\x02 | {status} | {votes} votes".format(
-            recent="\x1FMost Recent\x0F - " if chase == sorted_chases[-1] else "",
+            recent="\x1FMost Recent\x0F - " if (chase == sorted_chases[-1] and index == -1) else "",
             name=chase['Name'],
             desc=chase['Desc'],
             date=pendulum.parse(chase['CreatedAt']).in_tz('US/Pacific').format("MM/DD/YYYY h:mm A zz"),
@@ -422,9 +429,10 @@ def update_chase(bot, trigger):
     }
 
     if not args.get('--id'):
-        api_endpoint = bot.config.chaseapp.chaseapp_api_url + "/ListChases"
-        data = requests.get(api_endpoint, headers=headers).json()
-        sorted_chases = sorted(data, key=lambda i: i['CreatedAt'])
+        # api_endpoint = bot.config.chaseapp.chaseapp_api_url + "/ListChases"
+        # data = requests.get(api_endpoint, headers=headers).json()
+        # sorted_chases = sorted(data, key=lambda i: i['CreatedAt'])
+        sorted_chases = _fetch_api_list(bot, live_mode=True)
         update_id = sorted_chases[-1]['ID']
     else:
         update_id = args.get('--id')
@@ -568,15 +576,16 @@ def delete_chase(bot, trigger):
 
     delete_id = args.get('--id')
     if not delete_id:
-        headers = {
-            'User-Agent': 'chasebot@efnet ({}) v1.0'.format(trigger.nick),
-            'From': 'chasebot@cottongin.xyz'
-        }
+        # headers = {
+        #     'User-Agent': 'chasebot@efnet ({}) v1.0'.format(trigger.nick),
+        #     'From': 'chasebot@cottongin.xyz'
+        # }
 
-        api_endpoint = bot.config.chaseapp.chaseapp_api_url + "/ListChases"
+        # api_endpoint = bot.config.chaseapp.chaseapp_api_url + "/ListChases"
 
-        data = requests.get(api_endpoint, headers=headers).json()
-        sorted_chases = sorted(data, key=lambda i: i['CreatedAt'])
+        # data = requests.get(api_endpoint, headers=headers).json()
+        # sorted_chases = sorted(data, key=lambda i: i['CreatedAt'])
+        sorted_chases = _fetch_api_list(bot, live_mode=True)
         delete_id = sorted_chases[-1]['ID']
 
     headers = {
