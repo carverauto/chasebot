@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-python@v1
         with:
           python-version: "3.7.x"
-      - uses: Upgrade virtualenv
+      - name: Upgrade virtualenv
         run: |
           pip install virtualenv>=20.0.2
       - name: Install pip requirements
