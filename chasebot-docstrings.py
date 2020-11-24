@@ -3,7 +3,6 @@
 from __future__ import absolute_import, division, generator_stop, print_function, unicode_literals
 
 import inspect
-from pathlib import Path
 
 import chasebot
 
@@ -95,7 +94,7 @@ for index, fn in enumerate(desired_functions):
 
 for index, thing in enumerate(docstrings):
     try:
-        with open(str(Path.home()) + '/dev/chasebot/docs/content/en/cmd-{title}.md'.format(title=thing['title'].replace("_", "-")), 'w') as handle:
+        with open('./docs/content/en/cmd-{title}.md'.format(title=thing['title'].replace("_", "-")), 'w') as handle:
             handle.write(thing['template'])
     except Exception as e:
         print(e)
