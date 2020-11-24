@@ -19,7 +19,9 @@ jobs:
       - name: Upgrade virtualenv
         run: |
           pip install virtualenv>=20.0.2
-      - uses: sopel-irc/sopel@master
+      - name: install sopel from git
+        run: git clone git://github.com/sopel-irc/sopel.git
+        run: cd sopel;pip3 install .
       - name: Install pip requirements
         run: pip3 install -r requirements.txt
       - name: Generate command files
