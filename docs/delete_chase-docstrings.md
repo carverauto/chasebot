@@ -1,0 +1,1 @@
+"Delete chases\n\nRequires either `--last` or `--id [ChaseApp chase ID]`. Only specific users\nare granted access to this command.\n\n    e.g. ^delete --last\n         ^delete --id 7e171514-9c51-11ea-b6a3-0b58aa4cbde4"
