@@ -2,4 +2,4 @@ setuptools
 pendulum
 requests
 twython
-# sopel
+sopel
