@@ -19,6 +19,7 @@ jobs:
       - name: Upgrade virtualenv
         run: |
           pip install virtualenv>=20.0.2
+      - uses: sopel-irc/sopel@master
       - name: Install pip requirements
         run: pip3 install -r requirements.txt
       - name: Generate command files
