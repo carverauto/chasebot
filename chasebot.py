@@ -236,7 +236,7 @@ def _parseargs(passed_args):
 
         options = {
             k: True if v.startswith('-') else v
-            for k, v in zip(args, args[1:]+["--"]) if k.startswith('-')
+            for k, v in zip(args, args[1:] + ["--"]) if k.startswith('-')
         }
 
         extra = args
@@ -308,6 +308,7 @@ def send_links(bot, trigger):
     ))
 
 
+@plugin.output_prefix(APP_PREFIX)
 def _fetch_api_list(bot, caller="bot", live_mode=False, index=-1):
     headers = {
         'User-Agent': 'chasebot@efnet ({}) v1.0'.format(caller),
@@ -316,8 +317,12 @@ def _fetch_api_list(bot, caller="bot", live_mode=False, index=-1):
 
     api_endpoint = bot.config.chaseapp.chaseapp_api_url + "/ListChases"
 
-    data = requests.get(api_endpoint, headers=headers).json()
-    sorted_chases = sorted(data, key=lambda i: i['CreatedAt'])
+    try:
+        data = requests.get(api_endpoint, headers=headers).json()
+        sorted_chases = sorted(data, key=lambda i: i['CreatedAt'])
+    except Exception as err:
+        LOGGER.error(err)
+        return bot.say("Something went wrong fetching data")
 
     if live_mode:
         sorted_chases = [chase for chase in sorted_chases if chase.get('Live')]
@@ -328,6 +333,47 @@ def _fetch_api_list(bot, caller="bot", live_mode=False, index=-1):
         return bot.say("No chases found :(")
 
     return sorted_chases
+
+
+def _get_specific_chase(bot, chase_id):
+    if not chase_id:
+        return
+
+    api_endpoint = bot.config.chaseapp.chaseapp_api_url + "/GetChase"
+
+    payload = {
+        "id": chase_id
+    }
+
+    try:
+        data = requests.post(api_endpoint, json=payload).json()
+    except Exception as err:
+        LOGGER.error(err)
+        data = None
+
+    return data
+
+
+@plugin.command('getchase', 'get', 'gc')
+@plugin.example('.get --id [ChaseApp ID]')
+@plugin.output_prefix(APP_PREFIX)
+def get_chase(bot, trigger):
+    """Get chase
+    """
+
+    if not trigger.group(2):
+        return bot.reply("I need a chase ID")
+
+    chase = _get_specific_chase(bot, trigger.group(2))
+
+    if not chase:
+        return bot.say("No chase found by that ID")
+
+    output = ""
+    for key, value in chase.items():
+        output += "{}: {}, ".format(key, value)
+
+    bot.say(output)
 
 
 @plugin.command('listchases', 'list', 'lc', 'chases')
@@ -432,10 +478,16 @@ def update_chase(bot, trigger):
         # api_endpoint = bot.config.chaseapp.chaseapp_api_url + "/ListChases"
         # data = requests.get(api_endpoint, headers=headers).json()
         # sorted_chases = sorted(data, key=lambda i: i['CreatedAt'])
-        sorted_chases = _fetch_api_list(bot, live_mode=True)
+        # sorted_chases = _fetch_api_list(bot, live_mode=True)
+        sorted_chases = _fetch_api_list(bot)
+        if not sorted_chases:
+            return
         update_id = sorted_chases[-1]['ID']
     else:
         update_id = args.get('--id')
+
+    chase_info = _get_specific_chase(bot, update_id)
+    chase_info_urls = chase_info.get('URLs', [{}])
 
     if not args.get('--live'):
         args['--live'] = 'true'
@@ -455,7 +507,12 @@ def update_chase(bot, trigger):
             except Exception as e:
                 LOGGER.error(e)
                 return bot.reply("Your syntax for --urls must be valid json")
-            value = json_data
+            if args.get('--append'):
+                for thing in json_data:
+                    chase_info_urls.append(thing)
+                value = chase_info_urls
+            else:
+                value = json_data
         payload[arg.replace('--', '')] = value
     payload['id'] = update_id
 
