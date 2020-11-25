@@ -355,10 +355,15 @@ def _get_specific_chase(bot, chase_id):
 
 
 @plugin.command('getchase', 'get', 'gc')
-@plugin.example('.get --id [ChaseApp ID]')
+@plugin.example('.get [ChaseApp ID]')
 @plugin.output_prefix(APP_PREFIX)
 def get_chase(bot, trigger):
     """Get chase
+
+    Allows you to fetch a specific chase from the ChaseApp API. Requires a
+    ChaseApp ID (^list --showid)
+
+        e.g. ^get [ChaseApp ID]
     """
 
     if not trigger.group(2):

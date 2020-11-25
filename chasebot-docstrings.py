@@ -11,6 +11,7 @@ desired_functions = [
     chasebot.update_chase,
     chasebot.add_chase,
     chasebot.delete_chase,
+    chasebot.get_chase,
 ]
 
 template = """---
