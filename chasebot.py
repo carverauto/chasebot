@@ -135,7 +135,7 @@ class MyStreamer(twython.TwythonStreamer):
                                     CHASES['current']['desc'] = text
                                     CHASES['current']['network'] = "TBD"
                                     CHASES['current']['first_run'] = True
-                            if CHASES['current'].get('first_run'):
+                            if CHASES.get('current', {}).get('first_run'):
                                 headers = {
                                     'User-Agent': 'chasebot@efnet (via twitter) v1.0',
                                     'From': 'chasebot@cottongin.xyz',
