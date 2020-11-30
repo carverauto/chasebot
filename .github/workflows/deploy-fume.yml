@@ -1,7 +1,7 @@
 name: Deploy Fume
 on:
   push:
-    branches: [ master ]
+    branches: [ docs ]
 
 jobs:
   deploy:
