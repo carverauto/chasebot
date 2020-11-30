@@ -106,59 +106,59 @@ class MyStreamer(twython.TwythonStreamer):
                                 found_valid = True
                                 break
                     if found_valid:
-                        if status['user']['id'] == 3259117872:
-                            if "ready?" in text.lower():
+                        # if status['user']['id'] == 3259117872:
+                        #     if "ready?" in text.lower():
 
-                                if not CHASES.get('current'):
-                                    CHASES['current'] = {
-                                        'active': True,
-                                        'time': status['created_at']
-                                    }
-                                else:
-                                    now = pendulum.now()
-                                    if now.diff(pendulum.parse(CHASES['current']['time'], strict=False)).in_hours() >= 6:
-                                        CHASES['current'] = {
-                                            'active': True,
-                                            'time': status['created_at']
-                                        }
-                        if status['user']['id'] not in FOLLOW_LIST[6:]:
-                            chase = False
-                            for word in valid_tweets:
-                                if word in text.lower():
-                                    chase = True
-                            if CHASES.get('current', {}).get('active'):
-                                if urls and chase:
-                                    url = urls[0]['url']
-                                    url = requests.get(url).url
-                                    CHASES['current']['url'] = url
-                                    CHASES['current']['name'] = "Chase"
-                                    CHASES['current']['desc'] = text
-                                    CHASES['current']['network'] = "TBD"
-                                    CHASES['current']['first_run'] = True
-                            if CHASES.get('current', {}).get('first_run'):
-                                headers = {
-                                    'User-Agent': 'chasebot@efnet (via twitter) v1.0',
-                                    'From': 'chasebot@cottongin.xyz',
-                                    'X-ApiKey': sopel_instance.config.chaseapp.chaseapp_api_key
-                                }
+                        #         if not CHASES.get('current'):
+                        #             CHASES['current'] = {
+                        #                 'active': True,
+                        #                 'time': status['created_at']
+                        #             }
+                        #         else:
+                        #             now = pendulum.now()
+                        #             if now.diff(pendulum.parse(CHASES['current']['time'], strict=False)).in_hours() >= 6:
+                        #                 CHASES['current'] = {
+                        #                     'active': True,
+                        #                     'time': status['created_at']
+                        #                 }
+                        # if status['user']['id'] not in FOLLOW_LIST[6:]:
+                        #     chase = False
+                        #     for word in valid_tweets:
+                        #         if word in text.lower():
+                        #             chase = True
+                        #     if CHASES.get('current', {}).get('active'):
+                        #         if urls and chase:
+                        #             url = urls[0]['url']
+                        #             url = requests.get(url).url
+                        #             CHASES['current']['url'] = url
+                        #             CHASES['current']['name'] = "Chase"
+                        #             CHASES['current']['desc'] = text
+                        #             CHASES['current']['network'] = "TBD"
+                        #             CHASES['current']['first_run'] = True
+                        #     if CHASES.get('current', {}).get('first_run'):
+                        #         headers = {
+                        #             'User-Agent': 'chasebot@efnet (via twitter) v1.0',
+                        #             'From': 'chasebot@cottongin.xyz',
+                        #             'X-ApiKey': sopel_instance.config.chaseapp.chaseapp_api_key
+                        #         }
 
-                                payload = {
-                                    "name": CHASES['current']['name'],
-                                    "url": CHASES['current']['url'],
-                                    "desc": CHASES['current']['desc'],
-                                    "URLs": [
-                                        {"network": CHASES['current']['network'], "url": ""}
-                                    ],
-                                    "live": True
-                                }
+                        #         payload = {
+                        #             "name": CHASES['current']['name'],
+                        #             "url": CHASES['current']['url'],
+                        #             "desc": CHASES['current']['desc'],
+                        #             "URLs": [
+                        #                 {"network": CHASES['current']['network'], "url": ""}
+                        #             ],
+                        #             "live": True
+                        #         }
 
-                                api_endpoint = sopel_instance.config.chaseapp.chaseapp_api_url + "/AddChase"
+                        #         api_endpoint = sopel_instance.config.chaseapp.chaseapp_api_url + "/AddChase"
 
-                                data = requests.post(api_endpoint, headers=headers, json=payload)
+                        #         data = requests.post(api_endpoint, headers=headers, json=payload)
 
-                                CHASES['current']['id'] = data.text
-                                LOGGER.info("UUID created for a new chase: {}".format(data.text))
-                                CHASES['current']['first_run'] = False
+                        #         CHASES['current']['id'] = data.text
+                        #         LOGGER.info("UUID created for a new chase: {}".format(data.text))
+                        #         CHASES['current']['first_run'] = False
 
                         for channel in CHANNELS:
                             sopel_instance.say(text, channel)
