@@ -79,7 +79,7 @@ class MyStreamer(twython.TwythonStreamer):
                         status['user']['name'],
                         status.get('extended_tweet', {}).get('full_text') or status['text']
                     )
-                    urls = status['entities'].get('urls')
+                    # urls = status['entities'].get('urls')
                     try:
                         if status.get('quoted_status'):
                             text += " (\x02@{}\x02: {} - {})".format(
@@ -87,7 +87,7 @@ class MyStreamer(twython.TwythonStreamer):
                                 status['quoted_status']['text'],
                                 status['quoted_status_permalink'].get('url'),
                             )
-                            urls = status['quoted_status']['entities'].get('urls')
+                            # urls = status['quoted_status']['entities'].get('urls')
                     except Exception as e:
                         LOGGER.error(f"Error parsing quoted status: {e}")
 
@@ -305,6 +305,16 @@ def send_links(bot, trigger):
     """Sends links to the ChaseApp store pages"""
     return bot.say("Download ChaseApp here: {}".format(
         " | ".join("{}: {}".format(link['os'], link['url']) for link in APP_STORE_LINKS)
+    ))
+
+
+@plugin.command('supportus', 'patreon', 'giveusmoney')
+@plugin.example('.supportus')
+@plugin.output_prefix(APP_PREFIX)
+def support_links(bot, trigger):
+    """Sends patreon links"""
+    return bot.say("Support our development team here: {}".format(
+        "https://www.patreon.com/chaseapp"
     ))
 
 
