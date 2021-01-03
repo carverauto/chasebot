@@ -298,6 +298,14 @@ def twitter_thread(bot):
     firstStart = True
 
 
+@plugin.command('help', 'h')
+@plugin.example('.help')
+@plugin.output_prefix(BOT_PREFIX)
+def chasebot_help(bot, trigger):
+    """Sends help link to the chasebot documentation"""
+    return bot.say("https://bot.chaseapp.tv/")
+
+
 @plugin.command('applinks', 'applink', 'app')
 @plugin.example('.applinks')
 @plugin.output_prefix(APP_PREFIX)
