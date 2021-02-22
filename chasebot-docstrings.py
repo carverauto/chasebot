@@ -8,6 +8,7 @@ import chasebot
 
 desired_functions = [
     chasebot.list_chases,
+    chasebot.vote_on_chase,
     chasebot.update_chase,
     chasebot.add_chase,
     chasebot.delete_chase,

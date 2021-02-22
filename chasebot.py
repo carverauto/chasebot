@@ -1,5 +1,16 @@
 # coding=utf-8
 
+"""
+API ENDPOINTS IN USE
+
+/GetChase
+/UpdateChase
+/AddChase
+/ListChases
+/DeleteChase
+
+"""
+
 from __future__ import absolute_import, division, generator_stop, print_function, unicode_literals
 
 import html
@@ -7,6 +18,7 @@ import json
 from pathlib import Path
 import shlex
 import traceback
+from urllib.parse import urlparse
 
 import pendulum
 import requests
@@ -14,14 +26,6 @@ import twython
 
 from sopel import plugin, tools
 from sopel.config.types import ListAttribute, StaticSection, ValidatedAttribute
-# from sopel.formatting import color, bold
-# from sopel.tools.time import (
-#     format_time,
-#     get_channel_timezone,
-#     get_nick_timezone,
-#     get_timezone,
-#     validate_timezone
-# )
 
 
 sopel_instance = None
@@ -327,7 +331,7 @@ def support_links(bot, trigger):
 
 
 @plugin.output_prefix(APP_PREFIX)
-def _fetch_api_list(bot, caller="bot", live_mode=False, index=-1):
+def _fetch_api_list(bot, caller="bot", live_mode=False, index=0):
     headers = {
         'User-Agent': 'chasebot@efnet ({}) v1.0'.format(caller),
         'From': 'chasebot@cottongin.xyz'
@@ -337,20 +341,20 @@ def _fetch_api_list(bot, caller="bot", live_mode=False, index=-1):
 
     try:
         data = requests.get(api_endpoint, headers=headers).json()
-        sorted_chases = sorted(data, key=lambda i: i['CreatedAt'])
+        # data = sorted(data, key=lambda i: i['CreatedAt'])
     except Exception as err:
         LOGGER.error(err)
         return bot.say("Something went wrong fetching data")
 
     if live_mode:
-        sorted_chases = [chase for chase in sorted_chases if chase.get('Live')]
+        data = [chase for chase in data if chase.get('Live')]
     else:
-        sorted_chases = [sorted_chases[index]]
+        data = [data[index]]
 
-    if not sorted_chases:
+    if not data:
         return bot.say("No chases found :(")
 
-    return sorted_chases
+    return data
 
 
 def _get_specific_chase(bot, chase_id):
@@ -399,6 +403,47 @@ def get_chase(bot, trigger):
     bot.say(output)
 
 
+@plugin.rate(user=3)
+@plugin.command('vote', 'v')
+@plugin.example('.vote')
+@plugin.output_prefix(APP_PREFIX)
+def vote_on_chase(bot, trigger):
+    """Vote on chases
+
+    Allows users to vote on live chases!
+
+        e.g. ^vote
+    """
+
+    chases = _fetch_api_list(bot, caller=trigger.nick, live_mode=True, index=0) or []
+    if not chases:
+        return bot.reply("No live chase to vote on! Sorry")
+
+    chase = chases[0]
+
+    payload = {
+        'id':       '{}'.format(chase['ID']),
+        'votes':    int(chase['Votes']) + 1,
+        'name':     '{}'.format(chase['Name']),
+        'desc':     '{}'.format(chase['Desc']),
+        'networks':  chase['Networks'],
+        'createdAt': chase['CreatedAt'],
+        'live':      chase['Live']
+    }
+
+    headers = {
+        'User-Agent': 'chasebot@efnet ({}) v1.0'.format(trigger.nick),
+        'From': 'chasebot@cottongin.xyz',
+        'X-ApiKey': bot.config.chaseapp.chaseapp_api_key
+    }
+
+    api_endpoint = bot.config.chaseapp.chaseapp_api_url + "/UpdateChase"
+
+    data = requests.post(api_endpoint, headers=headers, json=payload)
+    if data.status_code != 200:
+        return bot.say("Something went wrong")
+
+
 @plugin.command('listchases', 'list', 'lc', 'chases')
 @plugin.example('.list --showlive')
 @plugin.output_prefix(APP_PREFIX)
@@ -416,34 +461,44 @@ def list_chases(bot, trigger):
     show_id = False
     list_live = False
 
-    index = -1
+    index = 0
     if trigger.group(2):
         args = _parseargs(trigger.group(2))
-        index = int(args.get('--index', 1)) * -1
+        index = int(args.get('--index', 1)) - 1
         show_id = args.get('--showid')
         list_live = args.get('--showlive')
 
-    sorted_chases = _fetch_api_list(bot, caller=trigger.nick, live_mode=list_live, index=index) or []
+    chases = _fetch_api_list(bot, caller=trigger.nick, live_mode=list_live, index=index) or []
 
-    for chase in sorted_chases:
-        bot.say("({recent}{date}) \x02{name} - {desc}\x02 | {status} | {votes} votes".format(
-            recent="\x1FMost Recent\x0F - " if (chase == sorted_chases[-1] and index == -1) else "",
+    for chase in chases:
+        bot.say("({recent}{date}) \x02{name}\x02 - {desc} | {status} | 🍩 {votes} donut{donuts}".format(
+            recent="\x1FMost Recent\x0F - " if (chase == chases[0] and index == 0) else "",
             name=chase['Name'],
             desc=chase['Desc'],
             date=pendulum.parse(chase['CreatedAt']).in_tz('US/Pacific').format("MM/DD/YYYY h:mm A zz"),
             votes=chase['Votes'],
             status="\x02\x0309LIVE\x03\x02" if chase['Live'] else "\x0304Inactive\x03",
+            donuts="" if chase['Votes'] == 1 else "s"
         ))
 
-        if chase['URL']:
-            links = []
-            links.append("(Primary) {}".format(chase['URL']))
-            if chase['URLs']:
-                for thing in chase['URLs']:
-                    if thing.get('Network') and thing.get('URL'):
-                        links.append("({}) {}".format(thing.get('Network'), thing.get('URL')))
-            for link in links:
-                bot.say(link)
+        links = []
+        networks = chase.get('Networks', [{}])
+        for network in networks:
+            name = ""
+            if network.get('Name'):
+                name += network.get('Name')
+            if network.get('Tier', 0) == 1:
+                name = "{}{}".format(
+                    "(Primary) " if name else "Primary",
+                    name
+                )
+            links.append("\x02{}\x02 {}".format(
+                name,
+                network.get('URL', 'no link found')
+            ))
+
+        for link in links:
+            bot.say(link)
 
         if show_id:
             bot.say(f"(ID) {chase['ID']}")
@@ -455,23 +510,34 @@ def list_chases(bot, trigger):
 def update_chase(bot, trigger):
     """Update chases
 
-    Requires either `--last` or `--id [ChaseApp chase ID]` along with some
-    fields to modify (`--name "[new name]"` or `--url [new url]` etc). Any
-    values that contain spaces must be surrounded by quotation marks. !*Only
-    specific users are granted access to this command.*!
+    Assumes the most recent chase unless `--id [ChaseApp chase ID]` is passed.
+    Fields to modify (`--title "[new title]"` or `--url [new url]` etc). Any
+    values that contain spaces must be surrounded by quotation marks. If
+    `--networks` is passed, will assume you want to append a new network and
+    url to the chase, pass `--edit` with an existing `--name` to edit an
+    existing network.
+    !*Only specific users are granted access to this command.*!
 
     Valid fields:
     ```
-        --name "LA Chase"
-        --url fancyurlhere.com
+        --title "LA Chase"
         --desc "some description here"
         --live true(default)/false
-        --network CBSLA
-        --urls "[{'network': 'google', 'url': 'https://google.com'}]"
+        --networks
+            --name ABC7
+            --url https://abc7.com/watch/live/
+            --tier 1
+            --edit
+                --name ABC7 --newname "ABC 7"
+                --url https://abc7.com/watch/live
+                --tier 0
+                --votes 0
     ```
 
-        e.g. ^update --last --name "LA Chase"
-             ^update --id 7e171514-9c51-11ea-b6a3-0b58aa4cbde4 --url fancyurlhere.com
+        e.g. ^update --title "LA Chase"
+             ^update --id 7e171514-9c51-11ea-b6a3-0b58aa4cbde4 --live true
+             ^update --networks --name CBSLA --url https://cbs.com
+             ^update --networks --edit --name CBSLA --tier 2 --votes 0
     """
 
     check = trigger.hostmask.split("!")[1]
@@ -486,10 +552,12 @@ def update_chase(bot, trigger):
     if not args:
         return bot.reply("Something went wrong parsing your input")
 
-    if not (args.get('--id') or args.get('--last')):
-        return bot.reply("I need a chase ID to reference")
-    if not any(elem in args for elem in ('--name', '--desc', '--url', '--network', '--live', '--urls')):
+    if not any(elem in args for elem in ('--title', '--desc', '--networks', '--live', '--votes')):
         return bot.reply("Your input was missing some required information")
+
+    if args.get('--networks'):
+        if not any(elem in args for elem in ('--name', '--url')):
+            return bot.reply("I need a --name and --url")
 
     headers = {
         'User-Agent': 'chasebot@efnet ({}) v1.0'.format(trigger.nick),
@@ -498,19 +566,13 @@ def update_chase(bot, trigger):
     }
 
     if not args.get('--id'):
-        # api_endpoint = bot.config.chaseapp.chaseapp_api_url + "/ListChases"
-        # data = requests.get(api_endpoint, headers=headers).json()
-        # sorted_chases = sorted(data, key=lambda i: i['CreatedAt'])
-        # sorted_chases = _fetch_api_list(bot, live_mode=True)
-        sorted_chases = _fetch_api_list(bot)
-        if not sorted_chases:
-            return
-        update_id = sorted_chases[-1]['ID']
+        chases = _fetch_api_list(bot)
+        update_id = chases[0]['ID']
     else:
         update_id = args.get('--id')
 
     chase_info = _get_specific_chase(bot, update_id)
-    chase_info_urls = chase_info.get('URLs', [{}])
+    chase_info_networks = chase_info.get('Networks', [{}])
 
     if not args.get('--live'):
         args['--live'] = 'true'
@@ -524,18 +586,42 @@ def update_chase(bot, trigger):
                 value = False
             else:
                 value = True
-        elif arg == '--urls':
+        elif arg == '--votes':
             try:
-                json_data = json.loads(value.replace("'", '"'))
-            except Exception as e:
-                LOGGER.error(e)
-                return bot.reply("Your syntax for --urls must be valid json")
-            if args.get('--append'):
-                for thing in json_data:
-                    chase_info_urls.append(thing)
-                value = chase_info_urls
+                value = int(value)
+            except Exception as err:
+                LOGGER.debug(err)
+                return bot.reply("That's an invalid vote count! STOP THE COUNT")
+        elif arg == '--title':
+            arg = 'name'
+        elif arg == '--networks':
+            if args.get('--edit'):
+                network_to_edit = None
+                for idx, network in enumerate(chase_info_networks):
+                    if network.get('Name') == args.get('--name'):
+                        network_to_edit = network
+                        break
+                if not network_to_edit:
+                    return bot.reply("I couldn't find that network to modify")
+                value = {
+                    'Name': args.get('--newname') or network_to_edit['Name'],
+                    'URL': args.get('--url') or network_to_edit['URL'],
+                    'Tier': int(args.get('--tier')) or network_to_edit['Tier'],
+                    'Logo': args.get('--logo', '') or network_to_edit['Logo'],
+                    'Other': args.get('--other', '') or network_to_edit['Other'],
+                }
+                chase_info_networks[idx] = value
             else:
-                value = json_data
+                chase_info_networks.append(
+                    {
+                        'Name': args.get('--name'),
+                        'URL': args.get('--url'),
+                        'Tier': int(args.get('--tier', 0)),
+                        'Logo': '',
+                        'Other': '',
+                    }
+                )
+            value = chase_info_networks
         payload[arg.replace('--', '')] = value
     payload['id'] = update_id
 
@@ -553,21 +639,22 @@ def update_chase(bot, trigger):
 def add_chase(bot, trigger):
     """Add chases
 
-    Requires `--name, --url, --desc, --live` any other fields are optional. Any
-    values that contain spaces must be surrounded by quotation marks. !*Only
-    specific users are granted access to this command.*!
+    Requires `--title, --desc, --network, --url` any other fields are optional.
+    Any values that contain spaces must be surrounded by quotation marks.
+    Assumes `--tier` will be 1 since most of the time adding a new chase will
+    set whatever network and url are passed to primary tier.
+    !*Only specific users are granted access to this command.*!
 
     Valid fields:
     ```
-        --name "LA Chase"
-        --url fancyurlhere.com
+        --title "LA Chase"
         --desc "some description here"
-        --live true(default)/false
         --network CBSLA
-        --urls "[{'network': 'google', 'url': 'https://google.com'}]"
+        --url fancyurlhere.com
+        --live true(default)/false
     ```
 
-        e.g. ^add --name "LA Chase" --url cbsla.com --desc "a chase in LA" --live
+        e.g. ^add --title "Test Chase" --desc "Testing API Changes" --network "FOX11" --url "https://www.foxla.com/live"
     """
 
     check = trigger.hostmask.split("!")[1]
@@ -582,7 +669,7 @@ def add_chase(bot, trigger):
     if not args:
         return bot.reply("Something went wrong parsing your input")
 
-    if not all(elem in args for elem in ('--name', '--desc', '--url', '--live')):
+    if not all(elem in args for elem in ('--title', '--desc', '--url', '--network')):
         return bot.reply("Your input was missing some required information")
 
     headers = {
@@ -591,31 +678,25 @@ def add_chase(bot, trigger):
         'X-ApiKey': bot.config.chaseapp.chaseapp_api_key
     }
 
-    if args.get('--network'):
-        urls = [
-            {"network": args['--network'], "url": args['--url']}
-        ]
-    else:
-        urls = [{}]
-    if args.get('--urls'):
-        value = args.get('--urls')
-        try:
-            json_data = json.loads(value.replace("'", '"'))
-        except Exception as e:
-            LOGGER.error(e)
-            return bot.reply("Your syntax for --urls must be valid json")
-        urls = json_data
     if args.get('--live'):
         if args['--live'] == 'false':
             args['--live'] = False
         else:
             args['--live'] = True
+    else:
+        args['--live'] = True
+    networks = [{
+        'Name': args['--network'],
+        'URL': args['--url'],
+        'Logo': args.get('--logo', urlparse(args['--url']).netloc.replace('www.', '')) or '',
+        'Tier': int(args.get('--tier')) or 1,
+        'Other': args.get('--other', '')
+    }]
     payload = {
-        "name": args['--name'],
-        "url": args['--url'],
+        "name": args['--title'],
         "desc": args['--desc'],
-        "URLs": urls,
-        "live": args.get('--live')
+        "live": args.get('--live'),
+        "networks": networks,
     }
 
     api_endpoint = bot.config.chaseapp.chaseapp_api_url + "/AddChase"
@@ -656,17 +737,10 @@ def delete_chase(bot, trigger):
 
     delete_id = args.get('--id')
     if not delete_id:
-        # headers = {
-        #     'User-Agent': 'chasebot@efnet ({}) v1.0'.format(trigger.nick),
-        #     'From': 'chasebot@cottongin.xyz'
-        # }
-
-        # api_endpoint = bot.config.chaseapp.chaseapp_api_url + "/ListChases"
-
-        # data = requests.get(api_endpoint, headers=headers).json()
-        # sorted_chases = sorted(data, key=lambda i: i['CreatedAt'])
-        sorted_chases = _fetch_api_list(bot, live_mode=True)
-        delete_id = sorted_chases[-1]['ID']
+        chases = _fetch_api_list(bot, live_mode=True)
+        if not chases:
+            return bot.say("No live chases, if you want to delete an inactive chase you need to give me a chase ID")
+        delete_id = chases[0]['ID']
 
     headers = {
         'User-Agent': 'chasebot@efnet ({}) v1.0'.format(trigger.nick),
