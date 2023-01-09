@@ -495,7 +495,8 @@ def list_chases(bot, trigger):
             votes=chase['Votes'],
             status="\x02\x0309LIVE\x03\x02" if chase['Live'] else "\x0304Inactive\x03",
             donuts="" if chase['Votes'] == 1 else "s",
-            duration=duration_string
+            duration=duration_string,
+            wheels=_parse_wheels(chase['Wheels'])
         ))
 
         num_links = 5
@@ -1047,6 +1048,26 @@ def _sanitize(text):
     text = html.unescape(text)
     return text
 
+
+def _parse_wheels(wheels_status={}):
+    if not wheels_status:
+        return "?"
+    count = 4
+    for idx,wheel in enumerate(wheels_status):
+        if not wheel:
+            count +- 1
+    if count == 4:
+        return "⦾⦾⦾⦾"
+    elif count == 3:
+        return "⦾⦾⦾⦻"
+    elif count == 2:
+        return "⦾⦾⦻⦻"
+    elif count == 1:
+        return "⦾⦻⦻⦻"
+    elif count == 0:
+        return "⦻⦻⦻⦻"
+    else:
+        return "?"
 # https://stackoverflow.com/questions/250357/truncate-a-string-without-ending-in-the-middle-of-a-word
 # since some descriptions are verbose
 def _truncate(text, max_length=100, ellipsis='…'):
