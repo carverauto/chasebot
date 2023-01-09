@@ -477,6 +477,7 @@ def list_chases(bot, trigger):
         started = pendulum.parse(chase.get('CreatedAt'))
         ended = pendulum.parse(chase.get('EndedAt'))
         duration = abs(ended.int_timestamp - started.int_timestamp)
+        desc = _truncate(chase['Desc'], max_length=250)
         if duration <= 604800:
             duration_string = " | Duration: {}".format(ended.diff(started).in_words())
         else:
@@ -486,10 +487,10 @@ def list_chases(bot, trigger):
                 duration_string = " | Duration: {}".format(ended.diff(started).in_words())
             else:
                 duration_string = ""
-        bot.write(['PRIVMSG', trigger.sender], "({recent}{date}) \x02{name}\x02 - {desc} | {status} | 🍩 {votes} donut{donuts}{duration}".format(
+        bot.write(['PRIVMSG', trigger.sender], "({recent}{date}) \x02{name}\x02 - {desc} | {status} | 🍩 {votes} donut{donuts} | 🛞 {wheels}{duration}".format(
             recent="\x1FMost Recent\x0F - " if (chase == chases[0] and index == 0) else "",
             name=chase['Name'],
-            desc=chase['Desc'],
+            desc=desc,
             date=pendulum.parse(chase['CreatedAt']).in_tz('US/Pacific').format("MM/DD/YYYY h:mm A zz"),
             votes=chase['Votes'],
             status="\x02\x0309LIVE\x03\x02" if chase['Live'] else "\x0304Inactive\x03",
@@ -1045,3 +1046,11 @@ def _sanitize(text):
     text = text.strip()
     text = html.unescape(text)
     return text
+
+# https://stackoverflow.com/questions/250357/truncate-a-string-without-ending-in-the-middle-of-a-word
+# since some descriptions are verbose
+def _truncate(text, max_length=100, ellipsis='…'):
+    if len(text) <= max_length:
+        return text
+    else:
+        return text[:max_length].rsplit(' ', 1)[0] + ellipsis
