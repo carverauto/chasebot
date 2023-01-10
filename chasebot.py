@@ -571,7 +571,12 @@ def end_chase(bot, trigger):
     """
 
     check = trigger.hostmask.split("!")[1]
-    if check not in bot.config.chaseapp.chaseapp_mods:
+    ident = check.split("@")[0]
+    host = check.split("@")[1]
+    checks = [ident, check, host]
+    # result =  any(elem in list1  for elem in list2)
+    # print(checks, bot.config.chaseapp.chaseapp_mods)
+    if not any(el in bot.config.chaseapp.chaseapp_mods for el in checks):
         LOGGER.error("{} tried to update a chase".format(trigger.hostmask))
         return bot.reply("You're not authorized to do that!")
 
@@ -746,10 +751,20 @@ def update_chase(bot, trigger):
              ^update --networks --edit --name CBSLA --tier 2 --votes 0
     """
 
+
     check = trigger.hostmask.split("!")[1]
-    if check not in bot.config.chaseapp.chaseapp_mods:
+    ident = check.split("@")[0]
+    host = check.split("@")[1]
+    checks = [ident, check, host]
+    # result =  any(elem in list1  for elem in list2)
+    # print(checks, bot.config.chaseapp.chaseapp_mods)
+    if not any(el in bot.config.chaseapp.chaseapp_mods for el in checks):
         LOGGER.error("{} tried to update a chase".format(trigger.hostmask))
         return bot.reply("You're not authorized to do that!")
+    # check = trigger.hostmask.split("!")[1]
+    # if check not in bot.config.chaseapp.chaseapp_mods:
+    #     LOGGER.error("{} tried to update a chase".format(trigger.hostmask))
+    #     return bot.reply("You're not authorized to do that!")
 
     if not trigger.group(2):
         return bot.reply("I need some info to update")
@@ -892,10 +907,20 @@ def add_chase(bot, trigger):
         e.g. ^add --title "Test Chase" --desc "Testing API Changes" --network "FOX11" --url "https://www.foxla.com/live"
     """
 
+
     check = trigger.hostmask.split("!")[1]
-    if check not in bot.config.chaseapp.chaseapp_mods:
-        LOGGER.error("{} tried to add a chase".format(trigger.hostmask))
+    ident = check.split("@")[0]
+    host = check.split("@")[1]
+    checks = [ident, check, host]
+    # result =  any(elem in list1  for elem in list2)
+    # print(checks, bot.config.chaseapp.chaseapp_mods)
+    if not any(el in bot.config.chaseapp.chaseapp_mods for el in checks):
+        LOGGER.error("{} tried to update a chase".format(trigger.hostmask))
         return bot.reply("You're not authorized to do that!")
+    # check = trigger.hostmask.split("!")[1]
+    # if check not in bot.config.chaseapp.chaseapp_mods:
+    #     LOGGER.error("{} tried to add a chase".format(trigger.hostmask))
+    #     return bot.reply("You're not authorized to do that!")
 
     if not trigger.group(2):
         return bot.reply("I need some info to add")
@@ -955,10 +980,20 @@ def delete_chase(bot, trigger):
              ^delete --id 7e171514-9c51-11ea-b6a3-0b58aa4cbde4
     """
 
+
     check = trigger.hostmask.split("!")[1]
-    if check not in bot.config.chaseapp.chaseapp_mods:
-        LOGGER.error("{} tried to delete a chase".format(trigger.hostmask))
+    ident = check.split("@")[0]
+    host = check.split("@")[1]
+    checks = [ident, check, host]
+    # result =  any(elem in list1  for elem in list2)
+    # print(checks, bot.config.chaseapp.chaseapp_mods)
+    if not any(el in bot.config.chaseapp.chaseapp_mods for el in checks):
+        LOGGER.error("{} tried to update a chase".format(trigger.hostmask))
         return bot.reply("You're not authorized to do that!")
+    # check = trigger.hostmask.split("!")[1]
+    # if check not in bot.config.chaseapp.chaseapp_mods:
+    #     LOGGER.error("{} tried to delete a chase".format(trigger.hostmask))
+    #     return bot.reply("You're not authorized to do that!")
 
     if not trigger.group(2):
         return bot.reply("I need a ChaseApp ID or `--last` to delete")
