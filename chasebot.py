@@ -999,7 +999,33 @@ def delete_chase(bot, trigger):
 @plugin.example('.chasenotify')
 @plugin.output_prefix(BOT_PREFIX)
 def chase_notify(bot, trigger):
-    pass
+    check = trigger.hostmask.split("!")[1]
+    ident = check.split("@")[0]
+    host = check.split("@")[1]
+    checks = [ident, check, host]
+    # result =  any(elem in list1  for elem in list2)
+    # print(checks, bot.config.chaseapp.chaseapp_mods)
+    if not any(el in bot.config.chaseapp.chaseapp_mods for el in checks):
+        LOGGER.error("{} tried to update a chase".format(trigger.hostmask))
+        return bot.reply("You're not authorized to do that!")
+    try:
+        channel = bot.channels[trigger.sender]
+    except KeyError as err:
+        print(err)
+        return
+    notify = ""
+    nicks = []
+    for nick, user in channel.users.items():
+        # notify += f"{nick} "
+        nicks.append(nick)
+
+    for _nicks in _chunker(nicks, 50):
+        bot.say("CHASE!! {}".format(
+            " ".join(_nicks)
+        ))
+    return
+    # print(notify.strip())
+    # pass
 
 
 @plugin.command('following')
@@ -1068,6 +1094,13 @@ def _parse_wheels(wheels_status={}):
         return "⦻⦻⦻⦻"
     else:
         return "?"
+
+
+# https://stackoverflow.com/questions/434287/how-to-iterate-over-a-list-in-chunks
+def _chunker(seq, size):
+    return (seq[pos:pos + size] for pos in range(0, len(seq), size))
+
+
 # https://stackoverflow.com/questions/250357/truncate-a-string-without-ending-in-the-middle-of-a-word
 # since some descriptions are verbose
 def _truncate(text, max_length=100, ellipsis='…'):
