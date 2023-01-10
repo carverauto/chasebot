@@ -680,20 +680,21 @@ def end_chase(bot, trigger):
         # else:
         #     payload[arg.replace('--', '').title()] = value
 
-    print(chase_info.get('EndedAt'))
+    # print(chase_info.get('EndedAt'))
 
     current_ended_at = pendulum.parse(chase_info.get('EndedAt', '2001-01-01T00:00:00Z'), strict=False)
     # print(now_ts - current_ended_at.int_timestamp)
 
+    now_fmt = now.format("YYYY-MM-DDTHH:mm:ssZ")
     if abs(now_ts - current_ended_at.int_timestamp) >= 604800:
-        payload['EndedAt'] = "{}".format(now)
+        payload['EndedAt'] = "{}".format(now_fmt)
     if not chase_info.get('EndedAt'):
-        payload['EndedAt'] = "{}".format(now)
+        payload['EndedAt'] = "{}".format(now_fmt)
         # payload['EndedAt'] = now_ts
     else:
         payload['EndedAt'] = chase_info.get('EndedAt')
     payload['Live'] = False
-    print(payload['EndedAt'])
+    # print(payload['EndedAt'])
 
     # for key, value in chase_info.items():
     #     for key_, value_ in payload.items():
